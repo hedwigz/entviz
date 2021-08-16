@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/entc/gen"
 )
 
-//go:embed index.html
+//go:embed template.html
 var tmplhtml string
 
 func VisualizeSchema() gen.Hook {

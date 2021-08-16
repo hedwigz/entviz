@@ -7,7 +7,6 @@ import (
 
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
-	// "entgo.io/ent/schema/field"
 	"github.com/hedwigz/entviz"
 )
 
