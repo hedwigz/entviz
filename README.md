@@ -11,4 +11,5 @@ go generate ./ent
 ```
 your html will be save at `ent/schema-viz.html`
 # example
-![image](https://user-images.githubusercontent.com/8277210/129726604-90dda3b5-8e52-4a79-9017-1a106f1110b9.png)
+![image (3)](https://user-images.githubusercontent.com/8277210/129726965-d3c89f1a-d66a-46b6-82a2-20f1056d350d.png)
+
