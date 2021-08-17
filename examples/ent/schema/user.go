@@ -33,5 +33,8 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("pets", Pet.Type),
 		edge.To("posts", Post.Type),
+		edge.To("parent", User.Type).
+			Unique(),
+		edge.To("cars", Car.Type),
 	}
 }

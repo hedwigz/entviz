@@ -84,14 +84,14 @@
       "#dba2e6", "#76fc1b", "#608fa4", "#20f6ba", "#07d7f6", "#dce77a", "#77ecca"]
   </script>
   <script type="text/javascript">
-    
+    // nameToColor matches strings with colors, using the color tables and a simple hash function (sum ascii values)
     const nameToColor = name => {
       const asciiSum = name.split("").reduce((acc, val) => {
         return acc + val.charCodeAt(0);
       }, 0);
       return window.colorsTable[asciiSum % window.colorsTable.length];
     }
-    
+    // see https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces
     const fieldsToTable = fields => {
       const container = document.createElement("div");
       container.setAttribute("class", "table-container")
@@ -118,8 +118,8 @@
       container.appendChild(tbl);
       return container;
     }
-    
-    const entGraph = JSON.parse("{\"nodes\":[{\"id\":\"Car\",\"fields\":[{\"name\":\"nickname\",\"type\":\"string\"},{\"name\":\"brand\",\"type\":\"string\"},{\"name\":\"model_year\",\"type\":\"int\"}]},{\"id\":\"Pet\",\"fields\":null},{\"id\":\"Post\",\"fields\":null},{\"id\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"role\",\"type\":\"int8\"},{\"name\":\"created\",\"type\":\"time.Time\"},{\"name\":\"age\",\"type\":\"int\"}]}],\"edges\":[{\"from\":\"User\",\"to\":\"Pet\",\"label\":\"pets\"},{\"from\":\"User\",\"to\":\"Post\",\"label\":\"posts\"},{\"from\":\"User\",\"to\":\"User\",\"label\":\"parent\"},{\"from\":\"User\",\"to\":\"Car\",\"label\":\"cars\"}]}");
+    // get the graph representation from go (template)
+    const entGraph = JSON.parse({{.}});
     entGraph.nodes = entGraph.nodes.map((n) =>
       Object.assign(n, {
         label: n.id,
