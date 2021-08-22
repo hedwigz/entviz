@@ -5,9 +5,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"html/template"
+	"net/http"
+	_ "net/http/pprof"
+	"time"
 
 	"io/ioutil"
 
+	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 )
 
@@ -67,24 +71,51 @@ var (
 	tmpl     = template.Must(template.New("viz").Parse(tmplhtml))
 )
 
+func generateHTML(g *gen.Graph) ([]byte, error) {
+	graph := toJsGraph(g)
+	buf, err := json.Marshal(&graph)
+	if err != nil {
+		return nil, err
+	}
+	var b bytes.Buffer
+	if err := tmpl.Execute(&b, string(buf)); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
 // VisualizeSchema is an ent hook that generates a static html page that visualizes the schema graph.
 func VisualizeSchema() gen.Hook {
 	return func(next gen.Generator) gen.Generator {
 		return gen.GenerateFunc(func(g *gen.Graph) error {
-			graph := toJsGraph(g)
-			buf, err := json.Marshal(&graph)
+			buf, err := generateHTML(g)
 			if err != nil {
 				return err
 			}
-			var b bytes.Buffer
-			if err := tmpl.Execute(&b, string(buf)); err != nil {
-				return err
-			}
 
-			if err := ioutil.WriteFile("schema-viz.html", b.Bytes(), 0644); err != nil {
+			if err := ioutil.WriteFile("schema-viz.html", buf, 0644); err != nil {
 				return err
 			}
 			return nil
 		})
 	}
+}
+
+func GeneratePage(schemaPath string, cfg *gen.Config) ([]byte, error) {
+	g, err := entc.LoadGraph(schemaPath, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return generateHTML(g)
+}
+
+func Serve(schemaPath string, cfg *gen.Config) (http.Handler, error) {
+	buf, err := GeneratePage(schemaPath, cfg)
+	if err != nil {
+		return nil, err
+	}
+	generateTime := time.Now()
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		http.ServeContent(w, req, "schema-viz.html", generateTime, bytes.NewReader(buf))
+	}), nil
 }

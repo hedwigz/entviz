@@ -9,7 +9,16 @@ run
 ```
 go generate ./ent
 ```
-your html will be save at `ent/schema-viz.html`
+your html will be saved at `ent/schema-viz.html`
+# server via http
+You can use the helper function `entviz.Serve` to easily serve the static html page over http
+```golang
+h, err := entviz.Serve("./ent/schema", &gen.Config{})
+if err != nil {
+  panic(err)
+}
+http.ListenAndServe("localhost:3002", h)
+```
 # example
 ![image (3)](https://user-images.githubusercontent.com/8277210/129726965-d3c89f1a-d66a-46b6-82a2-20f1056d350d.png)
 
