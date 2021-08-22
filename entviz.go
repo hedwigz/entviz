@@ -35,24 +35,22 @@ type (
 )
 
 // toJsGraph converts ent's graph into json serializable struct
-func toJsGraph(g *gen.Graph) *jsGraph {
-	var jsGraph = &jsGraph{}
+func toJsGraph(g *gen.Graph) jsGraph {
+	graph := jsGraph{}
 	for _, n := range g.Nodes {
 		node := jsNode{ID: n.Name}
-
 		for _, f := range n.Fields {
 			node.Fields = append(node.Fields, jsField{
 				Name: f.Name,
 				Type: f.Type.String(),
 			})
 		}
-		jsGraph.Nodes = append(jsGraph.Nodes, node)
-
+		graph.Nodes = append(graph.Nodes, node)
 		for _, e := range n.Edges {
 			if e.IsInverse() {
 				continue
 			}
-			jsGraph.Edges = append(jsGraph.Edges, jsEdge{
+			graph.Edges = append(graph.Edges, jsEdge{
 				From:  n.Name,
 				To:    e.Type.Name,
 				Label: e.Name,
@@ -60,23 +58,26 @@ func toJsGraph(g *gen.Graph) *jsGraph {
 		}
 
 	}
-	return jsGraph
+	return graph
 }
 
-//go:embed viz.html
-var tmplhtml string
+var (
+	//go:embed viz.tmpl
+	tmplhtml string
+	tmpl     = template.Must(template.New("viz").Parse(tmplhtml))
+)
 
-// VisualizeSchema is an ent's hook that generates static html that visualizes the schema graph.
+// VisualizeSchema is an ent hook that generates a static html page that visualizes the schema graph.
 func VisualizeSchema() gen.Hook {
 	return func(next gen.Generator) gen.Generator {
 		return gen.GenerateFunc(func(g *gen.Graph) error {
-			jsGraph := toJsGraph(g)
-			graph, err := json.Marshal(jsGraph)
+			graph := toJsGraph(g)
+			buf, err := json.Marshal(&graph)
 			if err != nil {
 				return err
 			}
 			var b bytes.Buffer
-			if err := tmpl.Execute(&b, string(graph)); err != nil {
+			if err := tmpl.Execute(&b, string(buf)); err != nil {
 				return err
 			}
 
@@ -87,5 +88,3 @@ func VisualizeSchema() gen.Hook {
 		})
 	}
 }
-
-var tmpl = template.Must(template.New("viz").Parse(tmplhtml))
