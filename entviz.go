@@ -5,13 +5,10 @@ import (
 	_ "embed"
 	"encoding/json"
 	"html/template"
-	"net/http"
 	_ "net/http/pprof"
-	"time"
 
 	"io/ioutil"
 
-	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 )
 
@@ -68,7 +65,10 @@ func toJsGraph(g *gen.Graph) jsGraph {
 var (
 	//go:embed viz.tmpl
 	tmplhtml string
-	tmpl     = template.Must(template.New("viz").Parse(tmplhtml))
+	//go:embed entviz.go.tmpl
+	tmplfile   string
+	viztmpl    = template.Must(template.New("viz").Parse(tmplhtml))
+	entviztmpl = template.Must(template.New("entviz").Parse(tmplfile))
 )
 
 func generateHTML(g *gen.Graph) ([]byte, error) {
@@ -78,7 +78,15 @@ func generateHTML(g *gen.Graph) ([]byte, error) {
 		return nil, err
 	}
 	var b bytes.Buffer
-	if err := tmpl.Execute(&b, string(buf)); err != nil {
+	if err := viztmpl.Execute(&b, string(buf)); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+func generateGoFile() ([]byte, error) {
+	var b bytes.Buffer
+	if err := entviztmpl.Execute(&b, nil); err != nil {
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -92,30 +100,18 @@ func VisualizeSchema() gen.Hook {
 			if err != nil {
 				return err
 			}
+			gbuf, err := generateGoFile()
+			if err != nil {
+				return err
+			}
 
 			if err := ioutil.WriteFile("schema-viz.html", buf, 0644); err != nil {
+				return err
+			}
+			if err = ioutil.WriteFile("entviz.go", gbuf, 0644); err != nil {
 				return err
 			}
 			return nil
 		})
 	}
-}
-
-func GeneratePage(schemaPath string, cfg *gen.Config) ([]byte, error) {
-	g, err := entc.LoadGraph(schemaPath, cfg)
-	if err != nil {
-		return nil, err
-	}
-	return generateHTML(g)
-}
-
-func Serve(schemaPath string, cfg *gen.Config) (http.Handler, error) {
-	buf, err := GeneratePage(schemaPath, cfg)
-	if err != nil {
-		return nil, err
-	}
-	generateTime := time.Now()
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		http.ServeContent(w, req, "schema-viz.html", generateTime, bytes.NewReader(buf))
-	}), nil
 }
