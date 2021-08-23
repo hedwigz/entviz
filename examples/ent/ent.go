@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/hedwigz/entviz/examples/ent/car"
 	"github.com/hedwigz/entviz/examples/ent/pet"
 	"github.com/hedwigz/entviz/examples/ent/post"
 	"github.com/hedwigz/entviz/examples/ent/user"
@@ -31,6 +32,7 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
+		car.Table:  car.ValidColumn,
 		pet.Table:  pet.ValidColumn,
 		post.Table: post.ValidColumn,
 		user.Table: user.ValidColumn,

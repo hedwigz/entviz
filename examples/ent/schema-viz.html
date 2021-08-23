@@ -121,7 +121,7 @@
 
     
     const entGraph = JSON.parse("{\"nodes\":[{\"id\":\"Car\",\"fields\":[{\"name\":\"nickname\",\"type\":\"string\"},{\"name\":\"brand\",\"type\":\"string\"},{\"name\":\"model_year\",\"type\":\"int\"}]},{\"id\":\"Pet\",\"fields\":null},{\"id\":\"Post\",\"fields\":null},{\"id\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"role\",\"type\":\"int8\"},{\"name\":\"created\",\"type\":\"time.Time\"},{\"name\":\"age\",\"type\":\"int\"}]}],\"edges\":[{\"from\":\"User\",\"to\":\"Pet\",\"label\":\"pets\"},{\"from\":\"User\",\"to\":\"Post\",\"label\":\"posts\"},{\"from\":\"User\",\"to\":\"User\",\"label\":\"parent\"},{\"from\":\"User\",\"to\":\"Car\",\"label\":\"cars\"}]}");
-    const nodes = new vis.DataSet(entGraph.nodes.map((n) =>
+    const nodes = new vis.DataSet(entGraph.nodes.map(n =>
     ({
       id: n.id,
       label: n.id,
