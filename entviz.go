@@ -64,24 +64,50 @@ func toJsGraph(g *gen.Graph) jsGraph {
 var (
 	//go:embed viz.tmpl
 	tmplhtml string
-	tmpl     = template.Must(template.New("viz").Parse(tmplhtml))
+	//go:embed entviz.go.tmpl
+	tmplfile   string
+	viztmpl    = template.Must(template.New("viz").Parse(tmplhtml))
+	entviztmpl = template.Must(template.New("entviz").Parse(tmplfile))
 )
+
+func generateHTML(g *gen.Graph) ([]byte, error) {
+	graph := toJsGraph(g)
+	buf, err := json.Marshal(&graph)
+	if err != nil {
+		return nil, err
+	}
+	var b bytes.Buffer
+	if err := viztmpl.Execute(&b, string(buf)); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+func generateGoFile() ([]byte, error) {
+	var b bytes.Buffer
+	if err := entviztmpl.Execute(&b, nil); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
 
 // VisualizeSchema is an ent hook that generates a static html page that visualizes the schema graph.
 func VisualizeSchema() gen.Hook {
 	return func(next gen.Generator) gen.Generator {
 		return gen.GenerateFunc(func(g *gen.Graph) error {
-			graph := toJsGraph(g)
-			buf, err := json.Marshal(&graph)
+			buf, err := generateHTML(g)
 			if err != nil {
 				return err
 			}
-			var b bytes.Buffer
-			if err := tmpl.Execute(&b, string(buf)); err != nil {
+			gbuf, err := generateGoFile()
+			if err != nil {
 				return err
 			}
 
-			if err := ioutil.WriteFile("schema-viz.html", b.Bytes(), 0644); err != nil {
+			if err := ioutil.WriteFile("schema-viz.html", buf, 0644); err != nil {
+				return err
+			}
+			if err = ioutil.WriteFile("entviz.go", gbuf, 0644); err != nil {
 				return err
 			}
 			return nil
