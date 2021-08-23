@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"html/template"
-	_ "net/http/pprof"
 
 	"io/ioutil"
 
