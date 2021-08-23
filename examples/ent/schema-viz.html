@@ -3,6 +3,7 @@
 <head>
   <title>ent schema network</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@5.2/distr/fira_code.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style type="text/css">
     html * {
       font-family: 'Fira Code', monospace !important;
@@ -34,7 +35,6 @@
       color: white;
     }
   </style>
-  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 
 <body>
@@ -118,20 +118,44 @@
       container.appendChild(tbl);
       return container;
     }
+
     
     const entGraph = JSON.parse("{\"nodes\":[{\"id\":\"Car\",\"fields\":[{\"name\":\"nickname\",\"type\":\"string\"},{\"name\":\"brand\",\"type\":\"string\"},{\"name\":\"model_year\",\"type\":\"int\"}]},{\"id\":\"Pet\",\"fields\":null},{\"id\":\"Post\",\"fields\":null},{\"id\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"role\",\"type\":\"int8\"},{\"name\":\"created\",\"type\":\"time.Time\"},{\"name\":\"age\",\"type\":\"int\"}]}],\"edges\":[{\"from\":\"User\",\"to\":\"Pet\",\"label\":\"pets\"},{\"from\":\"User\",\"to\":\"Post\",\"label\":\"posts\"},{\"from\":\"User\",\"to\":\"User\",\"label\":\"parent\"},{\"from\":\"User\",\"to\":\"Car\",\"label\":\"cars\"}]}");
-    entGraph.nodes = entGraph.nodes.map((n) =>
-      Object.assign(n, {
-        label: n.id,
-        color: nameToColor(n.id),
-        title: fieldsToTable(n.fields),
-      })
-    );
+    const nodes = new vis.DataSet(entGraph.nodes.map((n) =>
+    ({
+      id: n.id,
+      label: n.id,
+      color: nameToColor(n.id),
+      title: fieldsToTable(n.fields),
+    })
+    ));
+    edgesCounter = {};
+    
+    
+    const edgeKey = e => `${e.to}::${e.from}`
+    const edges = new vis.DataSet(entGraph.edges.map(e => {
+      const counter = (edgesCounter[edgeKey(e)] || 0) + 1;
+      edgesCounter[edgeKey(e)] = counter;
+      if (e.from === e.to) {
+        return {
+          ...e,
+          physics: false,
+          arrows: "to",
+          type: 'curvedCW',
+          selfReference: {
+            size: (counter + 1) * 10,
+            angle: (counter * 0.8) * Math.PI / 4,
+            renderBehindTheNode: false
+          }
+        }
+      }
+      return { ...e, type: 'curvedCW', physics: false, arrows: "to", smooth: { type: 'curvedCW', roundness: Math.pow(-1, counter) * 0.2 * counter } }
+    }));
     const options = {
       manipulation: false,
       edges: {
         physics: false,
-        smooth: { type: "cubicBezier" },
+        smooth: { type: 'curvedCW', roundness: 0.2 },
         arrows: "to",
       },
       nodes: {
@@ -141,20 +165,30 @@
         font: { align: "center" },
       },
       layout: {
+        improvedLayout: true,
         hierarchical: {
           enabled: true,
-          levelSeparation: 200,
+          levelSeparation: 250,
         },
       },
       physics: {
-        hierarchicalRepulsion: {
-          nodeDistance: 120,
+        enabled: true,
+        barnesHut: {
+          springConstant: 0,
+          avoidOverlap: 1,
+          springConstant: 0
         },
-      },
+        solver: "barnesHut",
+        repulsion: {
+          nodeDistance: 150,
+          springConstant: 0,
+          damping: 0,
+          springLength: 0
+        }
+      }
     };
-
     const container = document.getElementById("schema");
-    const gph = new vis.Network(container, entGraph, options);
+    const gph = new vis.Network(container, { nodes, edges }, options);
   </script>
 </body>
 
