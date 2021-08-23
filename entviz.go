@@ -9,6 +9,7 @@ import (
 
 	"io/ioutil"
 
+	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 )
 
@@ -114,4 +115,11 @@ func VisualizeSchema() gen.Hook {
 			return nil
 		})
 	}
+}
+func GeneratePage(schemaPath string, cfg *gen.Config) ([]byte, error) {
+	g, err := entc.LoadGraph(schemaPath, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return generateHTML(g)
 }
