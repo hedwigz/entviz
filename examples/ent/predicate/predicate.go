@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Car is the predicate function for car builders.
+type Car func(*sql.Selector)
+
 // Pet is the predicate function for pet builders.
 type Pet func(*sql.Selector)
 

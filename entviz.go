@@ -5,9 +5,10 @@ import (
 	_ "embed"
 	"encoding/json"
 	"html/template"
+	"os"
+	"path/filepath"
 
-	"io/ioutil"
-
+	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 )
 
@@ -65,9 +66,8 @@ var (
 	//go:embed viz.tmpl
 	tmplhtml string
 	//go:embed entviz.go.tmpl
-	tmplfile   string
-	viztmpl    = template.Must(template.New("viz").Parse(tmplhtml))
-	entviztmpl = template.Must(template.New("entviz").Parse(tmplfile))
+	tmplfile string
+	viztmpl  = template.Must(template.New("viz").Parse(tmplhtml))
 )
 
 func generateHTML(g *gen.Graph) ([]byte, error) {
@@ -83,34 +83,33 @@ func generateHTML(g *gen.Graph) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func generateGoFile() ([]byte, error) {
-	var b bytes.Buffer
-	if err := entviztmpl.Execute(&b, nil); err != nil {
-		return nil, err
-	}
-	return b.Bytes(), nil
+// VisualizeSchema is an ent hook that generates a static html page that visualizes the schema graph.
+func VisualizeSchema(next gen.Generator) gen.Generator {
+	return gen.GenerateFunc(func(g *gen.Graph) error {
+		buf, err := generateHTML(g)
+		if err != nil {
+			return err
+		}
+		path := filepath.Join(g.Config.Target, "schema-viz.html")
+		if err := os.WriteFile(path, buf, 0644); err != nil {
+			return err
+		}
+		return next.Generate(g)
+	})
 }
 
-// VisualizeSchema is an ent hook that generates a static html page that visualizes the schema graph.
-func VisualizeSchema() gen.Hook {
-	return func(next gen.Generator) gen.Generator {
-		return gen.GenerateFunc(func(g *gen.Graph) error {
-			buf, err := generateHTML(g)
-			if err != nil {
-				return err
-			}
-			gbuf, err := generateGoFile()
-			if err != nil {
-				return err
-			}
+type Extension struct {
+	entc.DefaultExtension
+}
 
-			if err := ioutil.WriteFile("schema-viz.html", buf, 0644); err != nil {
-				return err
-			}
-			if err = ioutil.WriteFile("entviz.go", gbuf, 0644); err != nil {
-				return err
-			}
-			return nil
-		})
+func (Extension) Hooks() []gen.Hook {
+	return []gen.Hook{
+		VisualizeSchema,
+	}
+}
+
+func (Extension) Templates() []*gen.Template {
+	return []*gen.Template{
+		gen.MustParse(gen.NewTemplate("entviz").Parse(tmplfile)),
 	}
 }

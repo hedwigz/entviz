@@ -28,7 +28,8 @@ type User struct {
 	Age *int `json:"age,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges UserEdges `json:"edges"`
+	Edges       UserEdges `json:"edges"`
+	user_parent *int
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -37,9 +38,13 @@ type UserEdges struct {
 	Pets []*Pet `json:"pets,omitempty"`
 	// Posts holds the value of the posts edge.
 	Posts []*Post `json:"posts,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *User `json:"parent,omitempty"`
+	// Cars holds the value of the cars edge.
+	Cars []*Car `json:"cars,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 }
 
 // PetsOrErr returns the Pets value or an error if the edge
@@ -60,6 +65,29 @@ func (e UserEdges) PostsOrErr() ([]*Post, error) {
 	return nil, &NotLoadedError{edge: "posts"}
 }
 
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) ParentOrErr() (*User, error) {
+	if e.loadedTypes[2] {
+		if e.Parent == nil {
+			// The edge parent was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Parent, nil
+	}
+	return nil, &NotLoadedError{edge: "parent"}
+}
+
+// CarsOrErr returns the Cars value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CarsOrErr() ([]*Car, error) {
+	if e.loadedTypes[3] {
+		return e.Cars, nil
+	}
+	return nil, &NotLoadedError{edge: "cars"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
@@ -71,6 +99,8 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case user.FieldCreated:
 			values[i] = new(sql.NullTime)
+		case user.ForeignKeys[0]: // user_parent
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type User", columns[i])
 		}
@@ -123,6 +153,13 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 				u.Age = new(int)
 				*u.Age = int(value.Int64)
 			}
+		case user.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_parent", value)
+			} else if value.Valid {
+				u.user_parent = new(int)
+				*u.user_parent = int(value.Int64)
+			}
 		}
 	}
 	return nil
@@ -136,6 +173,16 @@ func (u *User) QueryPets() *PetQuery {
 // QueryPosts queries the "posts" edge of the User entity.
 func (u *User) QueryPosts() *PostQuery {
 	return (&UserClient{config: u.config}).QueryPosts(u)
+}
+
+// QueryParent queries the "parent" edge of the User entity.
+func (u *User) QueryParent() *UserQuery {
+	return (&UserClient{config: u.config}).QueryParent(u)
+}
+
+// QueryCars queries the "cars" edge of the User entity.
+func (u *User) QueryCars() *CarQuery {
+	return (&UserClient{config: u.config}).QueryCars(u)
 }
 
 // Update returns a builder for updating this User.

@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/hedwigz/entviz/examples/ent/car"
 	"github.com/hedwigz/entviz/examples/ent/pet"
 	"github.com/hedwigz/entviz/examples/ent/post"
 	"github.com/hedwigz/entviz/examples/ent/user"
@@ -96,6 +97,40 @@ func (uc *UserCreate) AddPosts(p ...*Post) *UserCreate {
 		ids[i] = p[i].ID
 	}
 	return uc.AddPostIDs(ids...)
+}
+
+// SetParentID sets the "parent" edge to the User entity by ID.
+func (uc *UserCreate) SetParentID(id int) *UserCreate {
+	uc.mutation.SetParentID(id)
+	return uc
+}
+
+// SetNillableParentID sets the "parent" edge to the User entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableParentID(id *int) *UserCreate {
+	if id != nil {
+		uc = uc.SetParentID(*id)
+	}
+	return uc
+}
+
+// SetParent sets the "parent" edge to the User entity.
+func (uc *UserCreate) SetParent(u *User) *UserCreate {
+	return uc.SetParentID(u.ID)
+}
+
+// AddCarIDs adds the "cars" edge to the Car entity by IDs.
+func (uc *UserCreate) AddCarIDs(ids ...int) *UserCreate {
+	uc.mutation.AddCarIDs(ids...)
+	return uc
+}
+
+// AddCars adds the "cars" edges to the Car entity.
+func (uc *UserCreate) AddCars(c ...*Car) *UserCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddCarIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -291,6 +326,45 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: post.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ParentTable,
+			Columns: []string{user.ParentColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_parent = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.CarsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CarsTable,
+			Columns: []string{user.CarsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: car.FieldID,
 				},
 			},
 		}
