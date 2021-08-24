@@ -113,6 +113,7 @@ func (Extension) Templates() []*gen.Template {
 		gen.MustParse(gen.NewTemplate("entviz").Parse(tmplfile)),
 	}
 }
+
 func GeneratePage(schemaPath string, cfg *gen.Config) ([]byte, error) {
 	g, err := entc.LoadGraph(schemaPath, cfg)
 	if err != nil {
