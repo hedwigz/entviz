@@ -121,7 +121,7 @@
 
     // get the graph representation from go (template)
     const entGraph = JSON.parse({{.}});
-    const nodes = new vis.DataSet(entGraph.nodes.map(n =>
+    const nodes = new vis.DataSet((entGraph.nodes || []).map(n =>
     ({
       id: n.id,
       label: n.id,
@@ -133,7 +133,7 @@
     // go through edges and magnify nodes with multiple self references
     // and node with multiple edges to the same node
     const edgeKey = e => `${e.to}::${e.from}`
-    const edges = new vis.DataSet(entGraph.edges.map(e => {
+    const edges = new vis.DataSet((entGraph.edges || []).map(e => {
       const counter = (edgesCounter[edgeKey(e)] || 0) + 1;
       edgesCounter[edgeKey(e)] = counter;
       if (e.from === e.to) {
