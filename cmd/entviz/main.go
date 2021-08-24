@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -18,7 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	if err := ioutil.WriteFile("schema-viz.html", b, 0644); err != nil {
+	if err := os.WriteFile("schema-viz.html", b, 0644); err != nil {
 		log.Fatal(err)
 	}
 }

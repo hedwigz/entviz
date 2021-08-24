@@ -15,12 +15,12 @@ You can use the helper function `ent.ServeEntviz` to easily serve the static htm
 ```golang
 http.ListenAndServe("localhost:3002", ent.ServeEntviz())
 ```
-# use from command line
-install the cmd
+# Use from command line
+Install the cmd
 ```
 go get github.com/hedwigz/entviz/cmd/entviz
 ```
-then run inside your project:
+Then run inside your project:
 ```
 entviz ./etc/schema
 ```
