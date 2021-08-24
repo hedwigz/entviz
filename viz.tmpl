@@ -121,7 +121,7 @@
 
     // get the graph representation from go (template)
     const entGraph = JSON.parse({{.}});
-    const nodes = new vis.DataSet(entGraph.nodes.map((n) =>
+    const nodes = new vis.DataSet(entGraph.nodes.map(n =>
     ({
       id: n.id,
       label: n.id,

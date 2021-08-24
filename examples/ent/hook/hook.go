@@ -9,6 +9,19 @@ import (
 	"github.com/hedwigz/entviz/examples/ent"
 )
 
+// The CarFunc type is an adapter to allow the use of ordinary
+// function as Car mutator.
+type CarFunc func(context.Context, *ent.CarMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CarFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.CarMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CarMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The PetFunc type is an adapter to allow the use of ordinary
 // function as Pet mutator.
 type PetFunc func(context.Context, *ent.PetMutation) (ent.Value, error)
