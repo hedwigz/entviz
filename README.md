@@ -1,10 +1,10 @@
 # entviz
-entviz is an ent's hook that creates visual graph (html file) of your ent's schema.  
+entviz is an ent extension that creates visual graph (html file) of your ent's schema.  
 # install
 ```
 go get github.com/hedwigz/entviz
 ```
-add this hook to ent (see [example](examples/ent/entc.go) code)
+add this extension to ent (see [example](examples/ent/entc.go) code)
 run
 ```
 go generate ./ent
