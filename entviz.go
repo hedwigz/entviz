@@ -86,15 +86,15 @@ func generateHTML(g *gen.Graph) ([]byte, error) {
 // VisualizeSchema is an ent hook that generates a static html page that visualizes the schema graph.
 func VisualizeSchema(next gen.Generator) gen.Generator {
 	return gen.GenerateFunc(func(g *gen.Graph) error {
+		if err := next.Generate(g); err != nil {
+			return err
+		}
 		buf, err := generateHTML(g)
 		if err != nil {
 			return err
 		}
 		path := filepath.Join(g.Config.Target, "schema-viz.html")
-		if err := os.WriteFile(path, buf, 0644); err != nil {
-			return err
-		}
-		return next.Generate(g)
+		return os.WriteFile(path, buf, 0644)
 	})
 }
 
